@@ -2,6 +2,8 @@
   "name": "react-injection",
   "version": "0.0.1",
   "main": "./lib/take.js",
+  "license": "MIT",
+  "repository": "luvies/react-injection",
   "dependencies": {
     "inversify": "^5.0.1",
     "react": "^16.6.3",
@@ -15,6 +17,7 @@
     "@types/node": "10.12.9",
     "@types/react": "16.7.6",
     "@types/react-dom": "^16.0.9",
+    "coveralls": "^3.0.2",
     "enzyme": "^3.7.0",
     "enzyme-adapter-react-16": "^1.7.0",
     "identity-obj-proxy": "^3.0.0",

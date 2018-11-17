@@ -24,15 +24,13 @@ module.exports = (take) => {
     'test': {
       desc: 'Tests the package',
       async execute() {
-        // use ts-node to allow proper source mapping and not require building
-        await take.exec(
-          'yarn jest'
-        );
+        await take.exec('mkdir -p ./coverage')
+        await take.exec('FORCE_COLOR=true yarn jest --coverage --coverageReporters=text-lcov > ./coverage/report.txt');
       },
       children: {
         'coverage': {
           async execute() {
-            await take.exec('nyc report --reporter=text-lcov | coveralls');
+            await take.exec('yarn coveralls < ./coverage/report.txt');
           }
         }
       }
