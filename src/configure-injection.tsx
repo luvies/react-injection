@@ -56,13 +56,13 @@ export function configureInjection(defaultContainer?: Container) {
     injectComponent<TInject extends InjectConfig>(
       inject: TInject,
     ) {
-      type TActualProps<TBase> = Omit<TBase, keyof Shared<TInject, TBase>> & { container?: Container };
+      type RemoveInjectedProps<TBase> = Omit<TBase, keyof Shared<TInject, TBase>> & { container?: Container };
 
       // Return an full-bodied function to prevent syntax errors due to JSX conflicts.
       return function <TBaseProps>(
         Component: ComponentType<TBaseProps>,
-      ): ComponentType<TActualProps<TBaseProps>> {
-        const injector = class extends React.Component<TActualProps<TBaseProps>> {
+      ): ComponentType<RemoveInjectedProps<TBaseProps>> {
+        const injector = class extends React.Component<RemoveInjectedProps<TBaseProps>> {
           private services: Record<string, any> = {};
 
           public componentDidMount() {
@@ -92,6 +92,7 @@ export function configureInjection(defaultContainer?: Container) {
                   }
 
                   // Get the necessary services that we need to inject.
+                  // Unbind handlers first to prevent memory leaks.
                   this.unbindHandlers();
                   this.services = {};
                   for (const key of Object.keys(inject)) {

@@ -17,7 +17,7 @@ export class StateTracker<TState, TService extends IStatefulService<TState>> {
   public handlers = new Set<HandlerFn>();
 
   private changes: Array<StateChange<TState>> = [];
-  private intervalTracker?: number;
+  private scheduledUpdate = false;
 
   public constructor(
     private service: TService,
@@ -26,8 +26,9 @@ export class StateTracker<TState, TService extends IStatefulService<TState>> {
   public enqueueUpdate(update: StateChange<TState>): void {
     this.changes.push(update);
 
-    if (!this.intervalTracker) {
-      this.intervalTracker = setTimeout(() => this.handleUpdate());
+    if (!this.scheduledUpdate) {
+      Promise.resolve().then(() => this.handleUpdate());
+      this.scheduledUpdate = true;
     }
   }
 
@@ -61,8 +62,19 @@ export class StateTracker<TState, TService extends IStatefulService<TState>> {
       }
     }
 
+    this.scheduledUpdate = false;
     if (performedChange) {
+      // Copy all of the handlers to a separate list.
+      // This is because when each handler is fired, there's a chance
+      // that the component it's from will unbind & rebind, causing the next
+      // item in the set to be the same handler.
+      const handlers: HandlerFn[] = [];
       for (const handler of this.handlers) {
+        handlers.push(handler);
+      }
+
+      // Fire all the handlers.
+      for (const handler of handlers) {
         handler();
       }
 
