@@ -1,0 +1,7 @@
+.vscode/
+src/
+.editorconfig
+tsconfig.json
+tsconfig.test.json
+tslint.json
+Takefile

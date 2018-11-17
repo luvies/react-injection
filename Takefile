@@ -1,0 +1,59 @@
+const { join } = require('path');
+
+module.exports = (take) => {
+  take.options.shell.printStdout = true;
+  take.options.shell.printStderr = true;
+
+  return {
+    '': {
+      desc: 'Clean & build',
+      deps: ['clean', 'build']
+    },
+    'build': {
+      desc: 'Builds the package',
+      async execute() {
+        await take.exec('tsc');
+      }
+    },
+    'clean': {
+      desc: 'Cleans up build output',
+      async execute() {
+        await take.exec('rm', '-rf', 'lib');
+      }
+    },
+    'test': {
+      desc: 'Tests the package',
+      async execute() {
+        // use ts-node to allow proper source mapping and not require building
+        await take.exec(
+          'yarn jest'
+        );
+      },
+      children: {
+        'coverage': {
+          async execute() {
+            await take.exec('nyc report --reporter=text-lcov | coveralls');
+          }
+        }
+      }
+    },
+    'lint': {
+      desc: 'Lints the src/ folder',
+      async execute() {
+        await take.exec('tslint', '--project', '.');
+        await take.exec('tslint', '--project', 'test');
+      }
+    },
+    'publish': {
+      desc: 'Publishes the package to npm',
+      deps: [
+        ':', ':test'
+      ],
+      async execute() {
+        await take.exec('yarn', 'publish');
+        await take.exec('git', 'push', 'origin', '--tags');
+        await take.exec('git', 'push');
+      }
+    }
+  };
+};
