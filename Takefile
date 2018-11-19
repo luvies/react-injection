@@ -1,5 +1,3 @@
-const { join } = require('path');
-
 module.exports = (take) => {
   take.options.shell.printStdout = true;
   take.options.shell.printStderr = true;
@@ -7,19 +5,22 @@ module.exports = (take) => {
   return {
     '': {
       desc: 'Clean & build',
-      deps: ['clean', 'build']
+      deps: [
+        'clean',
+        'build',
+      ],
     },
     'build': {
       desc: 'Builds the package',
       async execute() {
         await take.exec('tsc');
-      }
+      },
     },
     'clean': {
       desc: 'Cleans up build output',
       async execute() {
-        await take.exec('rm', '-rf', 'lib');
-      }
+        await take.exec('rm -rf lib');
+      },
     },
     'test': {
       desc: 'Tests the package',
@@ -29,29 +30,36 @@ module.exports = (take) => {
       },
       children: {
         'coverage': {
+          desc: 'Uploads the coverage report to coveralls',
           async execute() {
             await take.exec('yarn coveralls < ./coverage/report.txt');
-          }
-        }
-      }
+          },
+        },
+      },
     },
     'lint': {
       desc: 'Lints the src/ folder',
       async execute() {
-        await take.exec('tslint', '--project', '.');
-        await take.exec('tslint', '--project', 'test');
-      }
+        await take.exec('tslint --project .');
+      },
+    },
+    'fix': {
+      desc: 'Fixes lint issues in the src/ folder',
+      async execute() {
+        await take.exec('tslint --project .');
+      },
     },
     'publish': {
       desc: 'Publishes the package to npm',
       deps: [
-        ':', ':test'
+        ':',
+        ':test',
       ],
       async execute() {
-        await take.exec('yarn', 'publish');
-        await take.exec('git', 'push', 'origin', '--tags');
-        await take.exec('git', 'push');
-      }
+        await take.exec('yarn publish');
+        await take.exec('git push origin --tags');
+        await take.exec('git push');
+      },
     }
   };
 };

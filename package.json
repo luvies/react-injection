@@ -1,7 +1,7 @@
 {
   "name": "react-injection",
   "version": "0.0.1",
-  "main": "./lib/take.js",
+  "main": "./lib/index.js",
   "license": "MIT",
   "repository": "luvies/react-injection",
   "dependencies": {
