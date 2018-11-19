@@ -7,6 +7,7 @@ import Adapter from 'enzyme-adapter-react-16';
 import { Container, injectable } from 'inversify';
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
+import { flushPromises } from '../testing/helpers';
 import { configureInjection } from './configure-injection';
 import { ReactiveService } from './reactive-service';
 
@@ -78,10 +79,6 @@ function init() {
 
 function renderHtml(shallowRend: Enzyme.ShallowWrapper<any, Readonly<{}>, React.Component<{}, {}, any>>) {
   return new DOMParser().parseFromString(shallowRend.html(), 'text/html');
-}
-
-function flushPromises() {
-  return new Promise(resolve => setImmediate(resolve));
 }
 
 beforeEach(() => {

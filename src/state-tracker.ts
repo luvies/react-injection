@@ -2,7 +2,7 @@ export interface IStatefulService<TState> {
   state: TState;
 }
 
-export type StateUpdater<TState> = Partial<TState> | ((prev: TState) => TState | undefined) | undefined;
+export type StateUpdater<TState> = Partial<TState> | ((prev: TState) => Partial<TState> | undefined) | undefined;
 
 export type AfterFn<TState> = (state: TState) => void;
 
