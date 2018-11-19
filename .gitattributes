@@ -1,0 +1,2 @@
+# remove test project from repo stats
+testing/project/* linguist-detectable=false
