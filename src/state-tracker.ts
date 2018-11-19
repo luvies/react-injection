@@ -68,14 +68,19 @@ export class StateTracker<TState, TService extends IStatefulService<TState>> {
       // This is because when each handler is fired, there's a chance
       // that the component it's from will unbind & rebind, causing the next
       // item in the set to be the same handler.
-      const handlers: HandlerFn[] = [];
+      const handlersCpy: HandlerFn[] = [];
       for (const handler of this.handlers) {
-        handlers.push(handler);
+        handlersCpy.push(handler);
       }
 
       // Fire all the handlers.
-      for (const handler of handlers) {
-        handler();
+      for (const handler of handlersCpy) {
+        // Since a handler may be unbound as a result of calling
+        // the previous handlers, we need to double check that the
+        // handler is still bound.
+        if (this.handlers.has(handler)) {
+          handler();
+        }
       }
 
       for (const after of afters) {

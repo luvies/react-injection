@@ -64,7 +64,6 @@ export function configureInjection(defaultContainer?: Container) {
       ): ComponentType<RemoveInjectedProps<TBaseProps>> {
         const injector = class extends React.Component<RemoveInjectedProps<TBaseProps>> {
           private services: Record<string, any> = {};
-          private unmounted = false;
 
           public componentDidMount() {
             this.bindHandlers();
@@ -76,7 +75,6 @@ export function configureInjection(defaultContainer?: Container) {
 
           public componentWillUnmount() {
             this.unbindHandlers();
-            this.unmounted = true;
           }
 
           public render() {
@@ -109,13 +107,8 @@ export function configureInjection(defaultContainer?: Container) {
           }
 
           private handleUpdate = () => {
-            // Since the setState could happen synchronously, we could
-            // get a state where we have unmounted during a service state change,
-            // meaning that this handler may be called after we have unmounted.
-            if (!this.unmounted) {
-              // Trigger render.
-              this.setState({});
-            }
+            // Trigger render.
+            this.setState({});
           }
 
           private bindHandlers() {
