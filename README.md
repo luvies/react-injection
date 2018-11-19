@@ -33,13 +33,13 @@ export class DataService extends ReactiveService<State> {
 }
 ```
 
-You can then create an Inversify container with this service bound to it, and define a module that provides the provider component and HOC function.
+You can then create an Inversify container with this service bound to it, and define a module that provides the provider component and HOC decorator.
 
 ```ts
 // injection.ts
-import { configureInjection } from 'react-injection';
+import { createInjection } from 'react-injection';
 
-export { InjectionProvider, injectComponent } = configureInjection();
+export { InjectionProvider, injectComponent } = createInjection();
 ```
 
 You can then consume the service from your components like so:

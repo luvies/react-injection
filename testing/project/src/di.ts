@@ -1,3 +1,3 @@
-import { configureInjection } from './injection';
+import { createInjection } from './injection';
 
-export const { InjectionProvider, injectComponent } = configureInjection();
+export const { InjectionProvider, injectComponent } = createInjection();

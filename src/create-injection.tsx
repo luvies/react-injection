@@ -33,11 +33,11 @@ export type InjectableProps<T> = {
 };
 
 /**
- * Configures an object that contains a provider component that can be used to pass
+ * Creates an object that contains a provider component that can be used to pass
  * the container down to child components, and an injector decorator that can be used
  * to inject services into a component.
  */
-export function configureInjection(defaultContainer?: Container) {
+export function createInjection(defaultContainer?: Container) {
   // Create a react context to allow sharing of the given container.
   const { Provider, Consumer } = createContext(defaultContainer);
 

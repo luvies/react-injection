@@ -8,7 +8,7 @@ import { Container, injectable } from 'inversify';
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import { flushPromises } from '../testing/helpers';
-import { configureInjection, InjectableProps } from './configure-injection';
+import { createInjection, InjectableProps } from './create-injection';
 import { ReactiveService } from './reactive-service';
 
 // Configure enzyme.
@@ -50,7 +50,7 @@ const injectConfig = {
 };
 
 let container: Container;
-let config: ReturnType<typeof configureInjection>;
+let injection: ReturnType<typeof createInjection>;
 let sampleProps: SampleProps & SamplePropsInjected;
 
 class SampleComponent extends Component<SampleProps & SamplePropsInjected> {
@@ -75,8 +75,8 @@ class SampleComponent extends Component<SampleProps & SamplePropsInjected> {
 function init() {
   return {
     div: document.createElement('div'),
-    IP: config.InjectionProvider,
-    InjectedComponent: config.injectComponent<InjectableProps<SamplePropsInjected>>(injectConfig)(SampleComponent),
+    IP: injection.InjectionProvider,
+    InjectedComponent: injection.injectComponent<InjectableProps<SamplePropsInjected>>(injectConfig)(SampleComponent),
   };
 }
 
@@ -88,7 +88,7 @@ beforeEach(() => {
   container = new Container();
   container.bind(sampleIdent).to(SampleService).inSingletonScope();
 
-  config = configureInjection();
+  injection = createInjection();
 });
 
 it('initialises', () => {
