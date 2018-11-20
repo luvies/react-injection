@@ -32,7 +32,10 @@ export type InjectableProps<T> = {
   [K in keyof T]: inversifyTypes.ServiceIdentifier<any>;
 };
 
-type ProviderProps = { container: Container, children: ReactNode };
+interface ProviderProps {
+  container: Container;
+  children: ReactNode;
+}
 
 /**
  * Creates an object that contains a provider component that can be used to pass

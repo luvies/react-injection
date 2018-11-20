@@ -1,4 +1,4 @@
-import { injectable, inject } from 'inversify';
+import { inject, injectable } from 'inversify';
 import { AfterFn, StateTracker, StateUpdater } from './state-tracker';
 
 export function isReactiveService<TState extends object = any>(service: unknown): service is ReactiveService<TState> {
