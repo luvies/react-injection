@@ -111,7 +111,9 @@ export function createInjection(defaultContainer?: Container) {
                   this.unbindHandlers();
 
                   // Get the current state tracker.
-                  this.stateTracker = container.get(StateTracker);
+                  if (container.isBound(StateTracker)) {
+                    this.stateTracker = container.get(StateTracker);
+                  }
 
                   // Get the necessary services that we need to inject.
                   const services: Record<string, any> = {};

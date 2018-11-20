@@ -109,48 +109,119 @@ it('initialises', () => {
   ReactDOM.unmountComponentAtNode(div);
 });
 
-it('support passing the container by props', () => {
-  const {
-    div,
-    InjectedComponent,
-  } = init();
+describe('InjectionProvider', () => {
+  it('bind the StateTracker in the right scope if it was not already bound', () => {
+    const {
+      IP,
+    } = init();
 
-  ReactDOM.render(
-    <InjectedComponent normalProp="tesing prop" container={container} />,
-    div,
-  );
-  ReactDOM.unmountComponentAtNode(div);
+    const cnt = new Container();
+
+    shallow(<IP container={cnt}>empty</IP>);
+
+    expect(cnt.isBound(StateTracker)).toBe(true);
+
+    const first = cnt.get<StateTracker>(StateTracker);
+    const second = cnt.get<StateTracker>(StateTracker);
+    expect(first).toBe(second);
+  });
+
+  it('does not bind the StateTracker if is was already', () => {
+    const {
+      IP,
+    } = init();
+
+    const cnt = new Container();
+    container.bind(StateTracker).toSelf().inSingletonScope();
+
+    shallow(<IP container={cnt}>empty</IP>);
+
+    expect(cnt.getAll<StateTracker>(StateTracker)).toHaveLength(1);
+  });
 });
 
-it('passes an instance of the injected service to the injected component', () => {
-  const {
-    InjectedComponent,
-  } = init();
+describe('injectComponent', () => {
+  it('support passing the container by props', () => {
+    const {
+      div,
+      InjectedComponent,
+    } = init();
 
-  const rend = shallow(<InjectedComponent normalProp="tesing prop" container={container} />);
-  const doc = renderHtml(rend);
+    ReactDOM.render(
+      <InjectedComponent normalProp="tesing prop" container={container} />,
+      div,
+    );
+    ReactDOM.unmountComponentAtNode(div);
+  });
 
-  expect(sampleProps.sampleService).toBeInstanceOf(SampleService);
-  expect(doc.querySelector('.sample')!.textContent).toBe('value1');
-});
+  it('passes an instance of the injected service to the injected component', () => {
+    const {
+      InjectedComponent,
+    } = init();
 
-it('updates the component when the service state changes', async () => {
-  const {
-    div,
-    InjectedComponent,
-  } = init();
+    const rend = shallow(<InjectedComponent normalProp="tesing prop" container={container} />);
+    const doc = renderHtml(rend);
 
-  ReactDOM.render(
-    <InjectedComponent normalProp="tesing prop" container={container} />,
-    div,
-  );
+    expect(sampleProps.sampleService).toBeInstanceOf(SampleService);
+    expect(doc.querySelector('.sample')!.textContent).toBe('value1');
+  });
 
-  expect(sampleProps.sampleService).toBeInstanceOf(SampleService);
+  it('updates the component when the service state changes', async () => {
+    const {
+      div,
+      InjectedComponent,
+    } = init();
 
-  sampleProps.sampleService.setSample('new value');
-  await flushPromises();
+    ReactDOM.render(
+      <InjectedComponent normalProp="tesing prop" container={container} />,
+      div,
+    );
 
-  expect(div.querySelector('.sample')!.textContent).toBe('new value');
+    expect(sampleProps.sampleService).toBeInstanceOf(SampleService);
 
-  ReactDOM.unmountComponentAtNode(div);
+    sampleProps.sampleService.setSample('new value');
+    await flushPromises();
+
+    expect(div.querySelector('.sample')!.textContent).toBe('new value');
+
+    ReactDOM.unmountComponentAtNode(div);
+  });
+
+  it('supports injection of services without binding StateTracker', () => {
+    const {
+      div,
+    } = init();
+
+    @injectable()
+    // @ts-ignore
+    class TestService {
+      public testMethod() {
+        return 'test';
+      }
+    }
+
+    let output: string | undefined;
+    let srv: TestService | undefined;
+    const TestComp = injection.injectComponent({
+      test: TestService,
+    })(({ test }: { test: TestService }) => {
+      output = test.testMethod();
+      srv = test;
+
+      return <p>test</p>;
+    });
+
+    const cnt = new Container();
+    cnt.bind(TestService).toSelf();
+
+    ReactDOM.render(
+      <TestComp container={cnt} />,
+      div,
+    );
+
+    expect(srv).toBeInstanceOf(TestService);
+    expect(output).toBe('test');
+
+    ReactDOM.unmountComponentAtNode(div);
+  });
 });
