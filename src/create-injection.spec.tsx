@@ -10,6 +10,7 @@ import ReactDOM from 'react-dom';
 import { flushPromises } from '../testing/helpers';
 import { createInjection, InjectableProps } from './create-injection';
 import { ReactiveService } from './reactive-service';
+import { StateTracker } from './state-tracker';
 
 // Configure enzyme.
 Enzyme.configure({ adapter: new Adapter() });
@@ -86,6 +87,7 @@ function renderHtml(shallowRend: Enzyme.ShallowWrapper<any, Readonly<{}>, React.
 
 beforeEach(() => {
   container = new Container();
+  container.bind(StateTracker).toSelf().inSingletonScope();
   container.bind(sampleIdent).to(SampleService).inSingletonScope();
 
   injection = createInjection();

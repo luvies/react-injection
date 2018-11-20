@@ -1,6 +1,6 @@
 import { Container, interfaces as inversifyTypes } from 'inversify';
 import React, { ComponentType, createContext, ReactNode } from 'react';
-import { isReactiveService } from './reactive-service';
+import { StateTracker } from './state-tracker';
 
 // ------ react-redux type definitions ------
 
@@ -32,6 +32,8 @@ export type InjectableProps<T> = {
   [K in keyof T]: inversifyTypes.ServiceIdentifier<any>;
 };
 
+type ProviderProps = { container: Container, children: ReactNode };
+
 /**
  * Creates an object that contains a provider component that can be used to pass
  * the container down to child components, and an injector decorator that can be used
@@ -45,8 +47,19 @@ export function createInjection(defaultContainer?: Container) {
     /**
      * Provides child components with the given container.
      */
-    InjectionProvider({ container, children }: { container: Container, children: ReactNode }) {
-      return <Provider value={container}>{children}</Provider>;
+    InjectionProvider: class InjectionProvider extends React.Component<ProviderProps> {
+      public constructor(props: ProviderProps) {
+        super(props);
+
+        // Make sure StateTracker has been bound to the current container.
+        if (!props.container.isBound(StateTracker)) {
+          props.container.bind(StateTracker).toSelf().inSingletonScope();
+        }
+      }
+
+      public render() {
+        return <Provider value={this.props.container}>{this.props.children}</Provider>;
+      }
     },
 
     /**
@@ -63,7 +76,7 @@ export function createInjection(defaultContainer?: Container) {
         Component: ComponentType<TBaseProps>,
       ): ComponentType<RemoveInjectedProps<TBaseProps>> {
         const injector = class extends React.Component<RemoveInjectedProps<TBaseProps>> {
-          private services: Record<string, any> = {};
+          private stateTracker?: StateTracker;
 
           public componentDidMount() {
             this.bindHandlers();
@@ -91,44 +104,40 @@ export function createInjection(defaultContainer?: Container) {
                     );
                   }
 
-                  // Get the necessary services that we need to inject.
                   // Unbind handlers first to prevent memory leaks.
                   this.unbindHandlers();
-                  this.services = {};
+
+                  // Get the current state tracker.
+                  this.stateTracker = container.get(StateTracker);
+
+                  // Get the necessary services that we need to inject.
+                  const services: Record<string, any> = {};
                   for (const key of Object.keys(inject)) {
-                    this.services[key] = container.get(inject[key]);
+                    services[key] = container.get(inject[key]);
                   }
 
                   // Init the wrapper component with the given props and services.
-                  return <Component {...this.props} {...this.services} />;
+                  return <Component {...this.props} {...services} />;
                 }}
               </Consumer>
             );
           }
 
-          private handleUpdate = () => {
-            // Trigger render.
-            this.setState({});
-          }
-
           private bindHandlers() {
-            for (const service of Object.values(this.services)) {
-              if (isReactiveService(service)) {
-                // @ts-ignore
-                const tracker = service.stateTracker;
-                tracker.handlers.add(this.handleUpdate);
-              }
+            if (this.stateTracker) {
+              this.stateTracker.handlers.add(this.handleUpdate);
             }
           }
 
           private unbindHandlers() {
-            for (const service of Object.values(this.services)) {
-              if (isReactiveService(service)) {
-                // @ts-ignore
-                const tracker = service.stateTracker;
-                tracker.handlers.delete(this.handleUpdate);
-              }
+            if (this.stateTracker) {
+              this.stateTracker.handlers.delete(this.handleUpdate);
             }
+          }
+
+          private handleUpdate = () => {
+            // Trigger render.
+            this.setState({});
           }
         };
 

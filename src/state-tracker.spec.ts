@@ -1,3 +1,5 @@
+import 'reflect-metadata';
+
 import { flushPromises } from '../testing/helpers';
 import { IStatefulService, StateTracker } from './state-tracker';
 
@@ -14,7 +16,7 @@ class SampleService implements IStatefulService<SampleState> {
 }
 
 let service: SampleService;
-let tracker: StateTracker<SampleState, SampleService>;
+let tracker: StateTracker;
 let handlerCalls: number;
 
 function handler() {
@@ -27,12 +29,13 @@ function altHandler() {
 
 beforeEach(() => {
   service = new SampleService();
-  tracker = new StateTracker(service);
+  tracker = new StateTracker();
   handlerCalls = 0;
 });
 
 it('performs an object state change', async () => {
   tracker.enqueueUpdate({
+    service,
     updater: { test: 'new-value' },
   });
 
@@ -47,6 +50,7 @@ it('performs an object state change', async () => {
 it('fires connected handlers on a state change', async () => {
   tracker.handlers.add(handler);
   tracker.enqueueUpdate({
+    service,
     updater: { test: 'new value' },
   });
 
@@ -59,6 +63,7 @@ it('fires all connected handlers on a state change', async () => {
   tracker.handlers.add(handler);
   tracker.handlers.add(altHandler);
   tracker.enqueueUpdate({
+    service,
     updater: { test: 'new value' },
   });
 
@@ -69,9 +74,11 @@ it('fires all connected handlers on a state change', async () => {
 
 it('handles all enqueued updates', async () => {
   tracker.enqueueUpdate({
+    service,
     updater: { test: 'new value' },
   });
   tracker.enqueueUpdate({
+    service,
     updater: { test2: 'changed value' },
   });
 
@@ -85,6 +92,7 @@ it('handles all enqueued updates', async () => {
 
 it('handles a function update correctly', async () => {
   tracker.enqueueUpdate({
+    service,
     updater: () => ({ test: 'new value' }),
   });
 
@@ -100,9 +108,11 @@ it('passes the previous state to the update function', async () => {
   let prevState: SampleState | undefined;
 
   tracker.enqueueUpdate({
+    service,
     updater: { test2: 'changed value' },
   });
   tracker.enqueueUpdate({
+    service,
     updater: prev => {
       prevState = prev;
 
@@ -122,6 +132,7 @@ it('passes the previous state to the update function', async () => {
 
 it('calls the after function after the update', async () => {
   tracker.enqueueUpdate({
+    service,
     updater: { test: 'new value' },
     after: handler,
   });
@@ -133,10 +144,12 @@ it('calls the after function after the update', async () => {
 
 it('calls all after functions after the update', async () => {
   tracker.enqueueUpdate({
+    service,
     updater: { test: 'new value' },
     after: handler,
   });
   tracker.enqueueUpdate({
+    service,
     updater: { test2: 'changed value' },
     after: altHandler,
   });
@@ -150,12 +163,14 @@ it('passes the new state to the after function', async () => {
   let newState: SampleState | undefined;
 
   tracker.enqueueUpdate({
+    service,
     updater: { test: 'new value' },
     after: state => {
       newState = state;
     },
   });
   tracker.enqueueUpdate({
+    service,
     updater: { test2: 'changed value' },
   });
 
@@ -170,6 +185,7 @@ it('passes the new state to the after function', async () => {
 it('should not trigger an update if the updater value was undefined', async () => {
   tracker.handlers.add(handler);
   tracker.enqueueUpdate({
+    service,
     updater: undefined,
   });
 
@@ -180,6 +196,7 @@ it('should not trigger an update if the updater value was undefined', async () =
 
 it('should not fire the after function if the updater was undefined', async () => {
   tracker.enqueueUpdate({
+    service,
     updater: undefined,
     after: handler,
   });
@@ -192,6 +209,7 @@ it('should not fire the after function if the updater was undefined', async () =
 it('should not trigger an update if the updater function returned undefined', async () => {
   tracker.handlers.add(handler);
   tracker.enqueueUpdate({
+    service,
     updater: () => undefined,
   });
 
@@ -202,6 +220,7 @@ it('should not trigger an update if the updater function returned undefined', as
 
 it('should not fire the after function if the updater function returned undefined', async () => {
   tracker.enqueueUpdate({
+    service,
     updater: () => undefined,
     after: handler,
   });

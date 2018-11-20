@@ -3,6 +3,7 @@ import 'reflect-metadata';
 import { Container } from 'inversify';
 import { flushPromises } from '../testing/helpers';
 import { ReactiveService } from './reactive-service';
+import { StateTracker } from './state-tracker';
 
 interface SampleState {
   test: string;
@@ -31,6 +32,9 @@ beforeEach(() => {
 });
 
 it('enqueues an update on setState', async () => {
+  // @ts-ignore
+  service.stateTracker = new StateTracker();
+
   expect(service.test).toBe('testing');
 
   service.setTest('new value');
@@ -42,6 +46,7 @@ it('enqueues an update on setState', async () => {
 
 it('should work in inversify', () => {
   const container = new Container();
+  container.bind(StateTracker).toSelf().inSingletonScope();
   container.bind(SampleService).toSelf();
 
   const sampleService = container.get(SampleService);

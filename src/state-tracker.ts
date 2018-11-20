@@ -1,3 +1,5 @@
+import { injectable } from 'inversify';
+
 export interface IStatefulService<TState> {
   state: TState;
 }
@@ -9,39 +11,40 @@ export type AfterFn<TState> = (state: TState) => void;
 export type HandlerFn = () => void;
 
 export interface StateChange<TState> {
+  service: IStatefulService<TState>;
   updater: StateUpdater<TState>;
   after?: AfterFn<TState>;
 }
 
-export class StateTracker<TState, TService extends IStatefulService<TState>> {
+@injectable()
+export class StateTracker {
   public handlers = new Set<HandlerFn>();
 
-  private changes: Array<StateChange<TState>> = [];
+  private changes: Array<StateChange<any>> = [];
   private scheduledUpdate = false;
 
-  public constructor(
-    private service: TService,
-  ) { }
-
-  public enqueueUpdate(update: StateChange<TState>): void {
+  public enqueueUpdate<TState>(update: StateChange<TState>): void {
     this.changes.push(update);
 
     if (!this.scheduledUpdate) {
-      Promise.resolve().then(() => this.handleUpdate());
+      Promise.resolve().then(() => this.handleUpdate<TState>());
       this.scheduledUpdate = true;
     }
   }
 
-  private handleUpdate() {
+  private handleUpdate<TState>() {
     let change: StateChange<TState> | undefined;
     let performedChange = false;
-    const afters: Array<AfterFn<TState>> = [];
+    const afters: Array<{
+      service: IStatefulService<TState>,
+      after: AfterFn<TState>,
+    }> = [];
 
     while (change = this.changes.shift()) {
       let newState: Partial<TState> | undefined;
 
       if (typeof change.updater === 'function') {
-        newState = change.updater(this.service.state);
+        newState = change.updater(change.service.state);
       } else {
         newState = change.updater;
       }
@@ -50,15 +53,18 @@ export class StateTracker<TState, TService extends IStatefulService<TState>> {
         continue;
       }
 
-      this.service.state = Object.assign(
+      change.service.state = Object.assign(
         {},
-        this.service.state,
+        change.service.state,
         newState,
       );
       performedChange = true;
 
       if (change.after) {
-        afters.push(change.after);
+        afters.push({
+          service: change.service,
+          after: change.after,
+        });
       }
     }
 
@@ -69,9 +75,7 @@ export class StateTracker<TState, TService extends IStatefulService<TState>> {
       // that the component it's from will unbind & rebind, causing the next
       // item in the set to be the same handler.
       const handlersCpy: HandlerFn[] = [];
-      for (const handler of this.handlers) {
-        handlersCpy.push(handler);
-      }
+      this.handlers.forEach(handler => handlersCpy.push(handler));
 
       // Fire all the handlers.
       for (const handler of handlersCpy) {
@@ -83,8 +87,8 @@ export class StateTracker<TState, TService extends IStatefulService<TState>> {
         }
       }
 
-      for (const after of afters) {
-        after(this.service.state);
+      for (const { after, service } of afters) {
+        after(service.state);
       }
     }
   }
