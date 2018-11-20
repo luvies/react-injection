@@ -4,7 +4,6 @@
 Provides a dependency injection system for React using InversifyJS. Each service can inherit the class `ReactiveService<TState>` to allow them to trigger component updates when their state changes, allowing for components to use service data in their render functions and respond to changes.
 
 ## Example Guide
-
 To define a service, you need to define a class similar to this:
 
 ```ts
@@ -62,7 +61,7 @@ function App({ dataService }: InjectedProps) {
     <p>{dataService.data}</p>
   );
 }
-
+ 
 // The InjectableProps<T> type will fully type the function, allowing
 // for missing props to be caught here & for full intellisense support.
 // You can remove the generic <InjectableProps<InjectedProps>> and use
@@ -84,3 +83,16 @@ ReactDOM.render(
   element
 );
 ```
+
+## Passing container as props directly
+The `injectComponent` decorator supports containers being passed directly as the prop `container`, however, if you do this, note that you **_MUST_** bind the `StateTracker` class like so:
+
+```ts
+// Import using a similar statement to this
+import { StateTracker } from 'react-injection';
+
+// Bind the class manually
+container.bind(StateTracker).toSelf().inSingletonScope();
+```
+
+It *must* be bound to itself and in the singleton scope to work properly, otherwise state update might not propagate properly from services. If you do not bind this class like this, then non of the services that inherit `ReactiveService` will work at all (since they require the class to be injected via props). If you do not use `ReactiveService`, then you do not need to do this binding, since it wil just skip it.
