@@ -1,10 +1,8 @@
-// tslint:disable:max-classes-per-file
-
 import 'reflect-metadata';
 
 import Enzyme, { shallow } from 'enzyme';
 import Adapter from 'enzyme-adapter-react-16';
-import { Container, injectable } from 'inversify';
+import { Container, inject, injectable } from 'inversify';
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import { flushPromises } from '../testing/helpers';
@@ -37,6 +35,26 @@ class SampleService extends ReactiveService<SampleState> {
   }
 }
 
+const sampleIdent = 'sample-service';
+
+@injectable()
+// @ts-ignore
+class SecondaryService {
+  public constructor(
+    // @ts-ignore
+    @inject(sampleIdent)
+    private sample: SampleService,
+  ) { }
+
+  public get test(): string {
+    return this.sample.sample;
+  }
+
+  public setTest(sample: string): void {
+    this.sample.setSample(sample);
+  }
+}
+
 interface SamplePropsInjected {
   sampleService: SampleService;
 }
@@ -45,7 +63,6 @@ interface SampleProps {
   normalProp: string;
 }
 
-const sampleIdent = 'sample-service';
 const injectConfig = {
   sampleService: sampleIdent,
 };
@@ -53,6 +70,7 @@ const injectConfig = {
 let container: Container;
 let injection: ReturnType<typeof createInjection>;
 let sampleProps: SampleProps & SamplePropsInjected;
+let secondaryInstance: SecondaryService;
 
 class SampleComponent extends Component<SampleProps & SamplePropsInjected> {
   public state = { test: 'testing' };
@@ -70,6 +88,17 @@ class SampleComponent extends Component<SampleProps & SamplePropsInjected> {
         <p className="sample">{this.props.sampleService.sample}</p>
       </>
     );
+  }
+}
+
+class SecondaryComponent extends Component<{ secondaryService: SecondaryService }> {
+  public constructor(props: { secondaryService: SecondaryService }) {
+    super(props);
+    secondaryInstance = props.secondaryService;
+  }
+
+  public render() {
+    return <p className="sample">{this.props.secondaryService.test}</p>;
   }
 }
 
@@ -124,6 +153,7 @@ describe('InjectionProvider', () => {
     const first = cnt.get<StateTracker>(StateTracker);
     const second = cnt.get<StateTracker>(StateTracker);
     expect(first).toBe(second);
+    expect(first).toBeInstanceOf(StateTracker);
   });
 
   it('does not bind the StateTracker if is was already', () => {
@@ -183,6 +213,34 @@ describe('injectComponent', () => {
     await flushPromises();
 
     expect(div.querySelector('.sample')!.textContent).toBe('new value');
+
+    ReactDOM.unmountComponentAtNode(div);
+  });
+
+  it('updates the component when any service state changes', async () => {
+    const {
+      div,
+    } = init();
+    const InjectedComponent = injection.injectComponent({
+      secondaryService: SecondaryService,
+    })(SecondaryComponent);
+
+    const cnt = new Container();
+    cnt.bind(StateTracker).toSelf().inSingletonScope();
+    cnt.bind(sampleIdent).to(SampleService).inSingletonScope();
+    cnt.bind(SecondaryService).toSelf();
+
+    ReactDOM.render(
+      <InjectedComponent container={cnt} />,
+      div,
+    );
+
+    expect(div.querySelector('.sample')!.textContent).toBe('value1');
+
+    secondaryInstance.setTest('test value');
+    await flushPromises();
+
+    expect(div.querySelector('.sample')!.textContent).toBe('test value');
 
     ReactDOM.unmountComponentAtNode(div);
   });
