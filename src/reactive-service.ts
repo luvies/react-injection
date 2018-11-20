@@ -9,6 +9,7 @@ export abstract class ReactiveService<TState extends object> {
   private stateTracker!: StateTracker;
 
   protected setState(updater: StateUpdater<TState>, after?: AfterFn<TState>): void {
+    // @ts-ignore
     this.stateTracker.enqueueUpdate({
       // @ts-ignore
       service: this,
