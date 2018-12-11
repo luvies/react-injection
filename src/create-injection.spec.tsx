@@ -63,6 +63,10 @@ interface SampleProps {
   normalProp: string;
 }
 
+interface SecondaryProps {
+  secondaryService: SecondaryService;
+}
+
 const injectConfig = {
   sampleService: sampleIdent,
 };
@@ -91,14 +95,24 @@ class SampleComponent extends Component<SampleProps & SamplePropsInjected> {
   }
 }
 
-class SecondaryComponent extends Component<{ secondaryService: SecondaryService }> {
-  public constructor(props: { secondaryService: SecondaryService }) {
+class SecondaryComponent extends Component<SecondaryProps> {
+  public constructor(props: SecondaryProps) {
     super(props);
     secondaryInstance = props.secondaryService;
   }
 
   public render() {
     return <p className="sample">{this.props.secondaryService.test}</p>;
+  }
+}
+
+class StateMappedComponent extends Component<{ testValue: string }> {
+  public constructor(props: { testValue: string }) {
+    super(props);
+  }
+
+  public render() {
+    return <p className="sample">{this.props.testValue}</p>;
   }
 }
 
@@ -279,6 +293,32 @@ describe('injectComponent', () => {
 
     expect(srv).toBeInstanceOf(TestService);
     expect(output).toBe('test');
+
+    ReactDOM.unmountComponentAtNode(div);
+  });
+
+  it('handles state mapping properly', async () => {
+    const {
+      div,
+    } = init();
+    const InjectedComponent = injection.injectComponent<SecondaryProps, { testValue: string }>(
+      {
+        secondaryService: SecondaryService,
+      },
+      services => ({ testValue: services.secondaryService.test }),
+    )(StateMappedComponent);
+
+    const cnt = new Container();
+    cnt.bind(StateTracker).toSelf().inSingletonScope();
+    cnt.bind(sampleIdent).to(SampleService).inSingletonScope();
+    cnt.bind(SecondaryService).toSelf();
+
+    ReactDOM.render(
+      <InjectedComponent container={cnt} />,
+      div,
+    );
+
+    expect(div.querySelector('.sample')!.textContent).toBe('value1');
 
     ReactDOM.unmountComponentAtNode(div);
   });

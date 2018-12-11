@@ -61,12 +61,8 @@ function App({ dataService }: InjectedProps) {
     <p>{dataService.data}</p>
   );
 }
- 
-// The InjectableProps<T> type will fully type the function, allowing
-// for missing props to be caught here & for full intellisense support.
-// You can remove the generic <InjectableProps<InjectedProps>> and use
-// the implicit typing if you wish.
-export default injectComponent<InjectableProps<InjectedProps>>({
+
+export default injectComponent<InjectedProps>({
   dataService: TYPES.DataService
 })(App);
 ```
@@ -83,6 +79,36 @@ ReactDOM.render(
   element
 );
 ```
+
+### State mapping
+You can map service states directly to props using the second param of `injectComponent`, which takes in a function that receives all of the injected services, and return an object to map into props. Example:
+
+```tsx
+interface InjectedProps {
+  dataService: DataService;
+}
+
+interface InjectedStateProps {
+  data: string;
+}
+
+function App({ data }: InjectedProps & InjectedStateProps) {
+  return (
+    <p>{data}</p>
+  );
+}
+
+export default injectComponent<InjectedProps, InjectedStateProps>(
+  {
+    dataService: TYPES.DataService
+  },
+  ({ dataService }) => ({
+    data: dataService.data,
+  })
+)(App);
+```
+
+Keep note, the services are injected regardless of whether you use the state mapper or not. It is mostly a helper to allow more direct access to service state & allow proper diffing in `componentDidUpdate(...)`.
 
 ## Passing container as props directly
 The `injectComponent` decorator supports containers being passed directly as the prop `container`, however, if you do this, note that you **_MUST_** bind the `StateTracker` class like so:

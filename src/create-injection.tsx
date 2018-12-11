@@ -1,5 +1,5 @@
 import { Container, interfaces as inversifyTypes } from 'inversify';
-import React, { ComponentType, createContext, ReactNode } from 'react';
+import React, { Component, ComponentType, createContext, ReactNode } from 'react';
 import { StateTracker } from './state-tracker';
 
 // ------ react-redux type definitions ------
@@ -69,16 +69,17 @@ export function createInjection(defaultContainer?: Container) {
      * Returns a function that will create a component that will have the requested services
      * injected as props.
      */
-    injectComponent<TInject>(
+    injectComponent<TInject, TStateMap = {}>(
       inject: InjectableProps<TInject>,
+      stateMapper?: (injected: TInject) => TStateMap,
     ) {
-      type RemoveInjectedProps<TBase> = Omit<TBase, keyof Shared<TInject, TBase>> & { container?: Container };
+      type RemoveInjectedProps<TBase> = Omit<TBase, keyof Shared<TInject & TStateMap, TBase>> & { container?: Container };
 
       // Return an full-bodied function to prevent syntax errors due to JSX conflicts.
       return function <TBaseProps>(
-        Component: ComponentType<TBaseProps>,
+        Comp: ComponentType<TBaseProps>,
       ): ComponentType<RemoveInjectedProps<TBaseProps>> {
-        const injector = class extends React.Component<RemoveInjectedProps<TBaseProps>> {
+        const injector = class extends Component<RemoveInjectedProps<TBaseProps>> {
           private stateTracker?: StateTracker;
 
           public componentDidMount() {
@@ -116,13 +117,19 @@ export function createInjection(defaultContainer?: Container) {
                   }
 
                   // Get the necessary services that we need to inject.
-                  const services: Record<string | number | symbol, any> = {};
+                  const services: TInject = {} as any;
                   for (const key of (Object.keys(inject) as Array<keyof typeof inject>)) {
                     services[key] = container.get(inject[key]);
                   }
 
+                  // If given a mapping function, map the service state to props directly.
+                  let stateMap: TStateMap | undefined;
+                  if (stateMapper) {
+                    stateMap = stateMapper(services);
+                  }
+
                   // Init the wrapper component with the given props and services.
-                  return <Component {...this.props} {...services} />;
+                  return <Comp {...this.props} {...services} {...stateMap} />;
                 }}
               </Consumer>
             );
@@ -149,7 +156,7 @@ export function createInjection(defaultContainer?: Container) {
         // Give the component a useful name for debugging.
         if (process.env.NODE_ENV === 'development') {
           Object.defineProperty(injector, 'name', {
-            value: `Injector(${Component.displayName || Component.name || 'Component'})`,
+            value: `Injector(${Comp.displayName || Comp.name || 'Component'})`,
           });
         }
 
