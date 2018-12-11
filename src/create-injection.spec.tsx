@@ -6,7 +6,7 @@ import { Container, inject, injectable } from 'inversify';
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import { flushPromises } from '../testing/helpers';
-import { createInjection, InjectableProps } from './create-injection';
+import { createInjection } from './create-injection';
 import { ReactiveService } from './reactive-service';
 import { StateTracker } from './state-tracker';
 
@@ -106,7 +106,7 @@ function init() {
   return {
     div: document.createElement('div'),
     IP: injection.InjectionProvider,
-    InjectedComponent: injection.injectComponent<InjectableProps<SamplePropsInjected>>(injectConfig)(SampleComponent),
+    InjectedComponent: injection.injectComponent<SamplePropsInjected>(injectConfig)(SampleComponent),
   };
 }
 

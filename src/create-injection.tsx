@@ -69,8 +69,8 @@ export function createInjection(defaultContainer?: Container) {
      * Returns a function that will create a component that will have the requested services
      * injected as props.
      */
-    injectComponent<TInject extends InjectConfig>(
-      inject: TInject,
+    injectComponent<TInject>(
+      inject: InjectableProps<TInject>,
     ) {
       type RemoveInjectedProps<TBase> = Omit<TBase, keyof Shared<TInject, TBase>> & { container?: Container };
 
@@ -116,8 +116,8 @@ export function createInjection(defaultContainer?: Container) {
                   }
 
                   // Get the necessary services that we need to inject.
-                  const services: Record<string, any> = {};
-                  for (const key of Object.keys(inject)) {
+                  const services: Record<string | number | symbol, any> = {};
+                  for (const key of (Object.keys(inject) as Array<keyof typeof inject>)) {
                     services[key] = container.get(inject[key]);
                   }
 
