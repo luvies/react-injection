@@ -129,6 +129,7 @@ export function createInjection(defaultContainer?: Container) {
                   }
 
                   // Init the wrapper component with the given props and services.
+                  // @ts-ignore
                   return <Comp {...this.props} {...services} {...stateMap} />;
                 }}
               </Consumer>
