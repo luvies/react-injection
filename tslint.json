@@ -47,8 +47,8 @@
     "no-unnecessary-type-assertion": true,
     "await-promise": true,
     "ban-comma-operator": true,
-    "no-floating-promises": true,
-    "no-void-expression": true,
+    "no-floating-promises": false,
+    "no-void-expression": false,
     "eofline": true,
     "linebreak-style": [
       true,
