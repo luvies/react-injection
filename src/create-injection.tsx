@@ -44,9 +44,16 @@ interface ProviderProps {
  */
 export function createInjection(defaultContainer?: Container) {
   // Create a react context to allow sharing of the given container.
-  const { Provider, Consumer } = createContext(defaultContainer);
+  const context = createContext(defaultContainer);
+  const { Provider, Consumer } = context;
 
   return {
+    /**
+     * The context of the injection.
+     * This is given to `useInjection`.
+     */
+    context,
+
     /**
      * Provides child components with the given container.
      */

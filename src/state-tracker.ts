@@ -22,13 +22,18 @@ export class StateTracker {
 
   private changes: Array<StateChange<any>> = [];
   private scheduledUpdate = false;
+  private synchronous = false;
 
   public enqueueUpdate<TState>(update: StateChange<TState>): void {
     this.changes.push(update);
 
-    if (!this.scheduledUpdate) {
-      Promise.resolve().then(() => this.handleUpdate<TState>());
-      this.scheduledUpdate = true;
+    if (!this.synchronous) {
+      if (!this.scheduledUpdate) {
+        Promise.resolve().then(() => this.handleUpdate<TState>());
+        this.scheduledUpdate = true;
+      }
+    } else {
+      this.handleUpdate<TState>();
     }
   }
 

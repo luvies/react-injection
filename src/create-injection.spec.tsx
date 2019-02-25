@@ -2,58 +2,15 @@ import 'reflect-metadata';
 
 import Enzyme, { shallow } from 'enzyme';
 import Adapter from 'enzyme-adapter-react-16';
-import { Container, inject, injectable } from 'inversify';
+import { Container, injectable } from 'inversify';
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
-import { flushPromises } from '../testing/helpers';
+import { flushPromises, initContainer, sampleIdent, SampleService, SecondaryService } from '../testing/helpers';
 import { createInjection } from './create-injection';
-import { ReactiveService } from './reactive-service';
 import { StateTracker } from './state-tracker';
 
 // Configure enzyme.
 Enzyme.configure({ adapter: new Adapter() });
-
-interface SampleState {
-  sample: string;
-}
-
-@injectable()
-// @ts-ignore
-class SampleService extends ReactiveService<SampleState> {
-  protected state: SampleState = {
-    sample: 'value1',
-  };
-
-  public get sample(): string {
-    return this.state.sample;
-  }
-
-  public setSample(sample: string): void {
-    this.setState({
-      sample,
-    });
-  }
-}
-
-const sampleIdent = 'sample-service';
-
-@injectable()
-// @ts-ignore
-class SecondaryService {
-  public constructor(
-    // @ts-ignore
-    @inject(sampleIdent)
-    private sample: SampleService,
-  ) { }
-
-  public get test(): string {
-    return this.sample.sample;
-  }
-
-  public setTest(sample: string): void {
-    this.sample.setSample(sample);
-  }
-}
 
 interface SamplePropsInjected {
   sampleService: SampleService;
@@ -239,10 +196,7 @@ describe('injectComponent', () => {
       secondaryService: SecondaryService,
     })(SecondaryComponent);
 
-    const cnt = new Container();
-    cnt.bind(StateTracker).toSelf().inSingletonScope();
-    cnt.bind(sampleIdent).to(SampleService).inSingletonScope();
-    cnt.bind(SecondaryService).toSelf();
+    const cnt = initContainer();
 
     ReactDOM.render(
       <InjectedComponent container={cnt} />,
@@ -308,10 +262,7 @@ describe('injectComponent', () => {
       services => ({ testValue: services.secondaryService.test }),
     )(StateMappedComponent);
 
-    const cnt = new Container();
-    cnt.bind(StateTracker).toSelf().inSingletonScope();
-    cnt.bind(sampleIdent).to(SampleService).inSingletonScope();
-    cnt.bind(SecondaryService).toSelf();
+    const cnt = initContainer();
 
     ReactDOM.render(
       <InjectedComponent container={cnt} />,
