@@ -3,6 +3,8 @@
 
 Provides a dependency injection system for React using InversifyJS. Each service can inherit the class `ReactiveService<TState>` to allow them to trigger component updates when their state changes, allowing for components to use service data in their render functions and respond to changes.
 
+This package provides both a HOC and a `useInjection` hook.
+
 ## Example Guide
 To define a service, you need to define a class similar to this:
 
@@ -122,3 +124,63 @@ container.bind(StateTracker).toSelf().inSingletonScope();
 ```
 
 It *must* be bound to itself and in the singleton scope to work properly, otherwise state update might not propagate properly from services. If you do not bind this class like this, then non of the services that inherit `ReactiveService` will work at all (since they require the class to be injected via props). If you do not use `ReactiveService`, then you do not need to do this binding, since it wil just skip it.
+
+## Hook
+To use the hook, you can do something like the following:
+
+```tsx
+// Imports from this module used in the example.
+import { useInjection, InjectableProps } from 'react-injection';
+
+// Configure the container from somewhere.
+const container = configureContainer();
+
+// Create the React context.
+// You can also use the context returned from `createInjection` if you plan to
+// mix both kinds.
+const context = createContext(container);
+
+// Consume the services in the component.
+interface InjectedProps {
+  dataService: DataService;
+}
+
+// If you define this object outside of the component,
+// it will be re-used for each render, and `useInjection`
+// will skip re-fetching the same services multiple times
+// (this is implmented via `useMemo`).
+// You can still use it inline if you want.
+const services: InjectableProps<InjectedProps> = {
+  dataService: TYPES.DataService,
+}
+
+function App() {
+  const { dataService } = useInjection(context, services);
+  const data = dateService.data;
+
+  return (
+    <p>{data}</p>
+  );
+}
+```
+
+If you plan on using the same context in a lot of places, you can easily wrap the hook:
+
+```ts
+export function useInject<T>(inject: InjectableProps<T>) {
+  return useInjection<T>(context, inject);
+}
+```
+
+This means that the App component would look like this:
+
+```tsx
+function App() {
+  const { dataService } = useInject(services);
+  const data = dateService.data;
+
+  return (
+    <p>{data}</p>
+  );
+}
+```
