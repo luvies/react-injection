@@ -3,8 +3,11 @@ import { Context, useContext, useEffect, useMemo, useState } from 'react';
 import { InjectableProps } from './create-injection';
 import { StateTracker } from './state-tracker';
 
-export function useInjection<T>(context: Context<Container | undefined>, inject: InjectableProps<T>): T {
-  const container = useContext(context);
+export function useInjection<T>(
+  context: Context<Container | undefined> | Context<Container>,
+  inject: InjectableProps<T>,
+): T {
+  const container = useContext<Container | undefined>(context as any);
 
   if (!container) {
     throw new Error('No container was provided in context');

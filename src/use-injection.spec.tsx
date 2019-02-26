@@ -1,16 +1,16 @@
 import 'reflect-metadata';
 
 import { Container } from 'inversify';
-import React, { Context } from 'react';
+import React, { Context, createContext } from 'react';
 import ReactDOM from 'react-dom';
 import { act } from 'react-dom/test-utils';
 import { initContainer, sampleIdent, SampleService, SecondaryService } from '../testing/helpers';
-import { createInjection, InjectableProps } from './create-injection';
+import { InjectableProps } from './create-injection';
 import { useInjection } from './use-injection';
 
 let root: HTMLDivElement;
 let container: Container;
-let context: Context<Container | undefined>;
+let context: Context<Container>;
 
 function useInject<T>(inject: InjectableProps<T>): T {
   return useInjection(context, inject);
@@ -41,7 +41,7 @@ beforeEach(() => {
 
   container = initContainer(true);
 
-  context = createInjection(container).context;
+  context = createContext(container);
 });
 
 afterEach(() => {

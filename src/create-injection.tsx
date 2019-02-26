@@ -50,7 +50,6 @@ export function createInjection(defaultContainer?: Container) {
   return {
     /**
      * The context of the injection.
-     * This is given to `useInjection`.
      */
     context,
 
