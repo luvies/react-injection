@@ -1,4 +1,4 @@
-import { injectable } from 'inversify';
+import { Container, injectable } from 'inversify';
 
 export interface IStatefulService<TState> {
   state: TState;
@@ -18,6 +18,12 @@ export interface StateChange<TState> {
 
 @injectable()
 export class StateTracker {
+  public static bindToContainer(container: Container) {
+    if (!container.isBound(StateTracker)) {
+      container.bind(StateTracker).toSelf().inSingletonScope();
+    }
+  }
+
   public handlers = new Set<HandlerFn>();
 
   private changes: Array<StateChange<any>> = [];

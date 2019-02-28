@@ -1,6 +1,7 @@
 import { Container, interfaces as inversifyTypes } from 'inversify';
 import React, { Component, ComponentType, createContext, ReactNode } from 'react';
 import { StateTracker } from './state-tracker';
+import { useInjection } from './use-injection';
 
 // ------ react-redux type definitions ------
 
@@ -61,14 +62,19 @@ export function createInjection(defaultContainer?: Container) {
         super(props);
 
         // Make sure StateTracker has been bound to the current container.
-        if (!props.container.isBound(StateTracker)) {
-          props.container.bind(StateTracker).toSelf().inSingletonScope();
-        }
+        StateTracker.bindToContainer(props.container);
       }
 
       public render() {
         return <Provider value={this.props.container}>{this.props.children}</Provider>;
       }
+    },
+
+    /**
+     * A wrapped version of the `useInjection` hook that uses the current context.
+     */
+    useInject<T>(inject: InjectableProps<T>) {
+      return useInjection(context, inject);
     },
 
     /**

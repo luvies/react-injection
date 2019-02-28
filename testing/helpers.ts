@@ -50,7 +50,7 @@ export class SecondaryService {
 
 export function initContainer(synchronous = false) {
   const container = new Container();
-  container.bind(StateTracker).toSelf().inSingletonScope();
+  StateTracker.bindToContainer(container);
   container.bind(sampleIdent).to(SampleService).inSingletonScope();
   container.bind(SecondaryService).toSelf();
 

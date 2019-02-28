@@ -34,13 +34,13 @@ export class DataService extends ReactiveService<State> {
 }
 ```
 
-You can then create an Inversify container with this service bound to it, and define a module that provides the provider component and HOC decorator.
+You can then create an Inversify container with this service bound to it, and define a module that provides the provider component, HOC decorator, and the hook.
 
 ```ts
 // injection.ts
 import { createInjection } from 'react-injection';
 
-export { InjectionProvider, injectComponent } = createInjection();
+export { InjectionProvider, injectComponent, useInject } = createInjection();
 ```
 
 You can then consume the service from your components like so:
@@ -120,17 +120,17 @@ The `injectComponent` decorator supports containers being passed directly as the
 import { StateTracker } from 'react-injection';
 
 // Bind the class manually
-container.bind(StateTracker).toSelf().inSingletonScope();
+StateTracker.bindToContainer(container);
 ```
 
-It *must* be bound to itself and in the singleton scope to work properly, otherwise state update might not propagate properly from services. If you do not bind this class like this, then non of the services that inherit `ReactiveService` will work at all (since they require the class to be injected via props). If you do not use `ReactiveService`, then you do not need to do this binding, since it wil just skip it.
+You need to do this whenever you do not use the `InjectionProvider` component provided in `createInjection`.
 
 ## Hook
 To use the hook, you can do something like the following:
 
 ```tsx
 // Imports from this module used in the example.
-import { useInjection, InjectableProps } from 'react-injection';
+import { useInjection, InjectableProps, StateTracker } from 'react-injection';
 
 // Configure the container from somewhere.
 const container = configureContainer();
@@ -139,6 +139,10 @@ const container = configureContainer();
 // You can also use the context returned from `createInjection` if you plan to
 // mix both kinds.
 const context = createContext(container);
+
+// If you use the provider directly, instead of the one given in `createInjection`,
+// then you need to remember to do the following.
+StateTracker.bindToContainer(container);
 
 // Consume the services in the component.
 interface InjectedProps {
@@ -164,15 +168,7 @@ function App() {
 }
 ```
 
-If you plan on using the same context in a lot of places, you can easily wrap the hook:
-
-```ts
-export function useInject<T>(inject: InjectableProps<T>) {
-  return useInjection<T>(context, inject);
-}
-```
-
-This means that the App component would look like this:
+You can also use the `useInject` function provided in `createInjection`. Doing so would mean the App component would look like this:
 
 ```tsx
 function App() {

@@ -21,11 +21,16 @@ export function useInjection<T>(
   useEffect(() => {
     const doUpdate = () => setTrigger({});
 
-    const stateTracker = container.get(StateTracker);
-    stateTracker.handlers.add(doUpdate);
+    let stateTracker: StateTracker | undefined;
+    if (container.isBound(StateTracker)) {
+      stateTracker = container.get(StateTracker);
+      stateTracker.handlers.add(doUpdate);
+    }
 
     return () => {
-      stateTracker.handlers.delete(doUpdate);
+      if (stateTracker) {
+        stateTracker.handlers.delete(doUpdate);
+      }
     };
   });
 
