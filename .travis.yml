@@ -3,8 +3,16 @@ sudo: false
 node_js:
   - "10"
   - "12"
+  - "14"
+cache:
+  npm: false
+  directories:
+    - "~/.pnpm-store"
+before_install:
+  - curl -L https://raw.githubusercontent.com/pnpm/self-installer/master/install.js | node
+  - pnpm config set store-dir ~/.pnpm-store
 install:
-  - yarn
+  - pnpm install
 script:
   - take lint
   - take test
